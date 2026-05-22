@@ -1,2 +1,11 @@
-requests
-beautifulsoup4
+
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+Flask-SocketIO==5.3.6
+requests==2.31.0
+beautifulsoup4==4.12.2
+python-whois==0.9.4
+dnspython==2.4.2
+reportlab==4.0.9
+python-socketio==5.9.0
+eventlet==0.33.3

@@ -1,0 +1,671 @@
+
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Security Toolkit</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a1f2e;
+            --accent-cyan: #00d4ff;
+            --accent-green: #00ff88;
+            --accent-red: #ff3355;
+            --accent-yellow: #ffaa33;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --border-color: #2d3748;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background grid */
+        .grid-bg {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(17, 24, 39, 0.95) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+        }
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.4rem;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .navbar-brand i { margin-right: 10px; }
+        .nav-link { 
+            color: var(--text-secondary) !important;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-link:hover { color: var(--accent-cyan) !important; }
+        .nav-link.active { color: var(--accent-cyan) !important; }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.1);
+        }
+        .card-header {
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+        }
+        .card-header i { margin-right: 8px; }
+
+        /* Scan target card - hero */
+        .hero-section {
+            position: relative;
+            z-index: 1;
+            padding: 40px 0 20px;
+        }
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green), var(--accent-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+        /* Input */
+        .form-control, .form-select {
+            background: var(--bg-primary) !important;
+            border: 2px solid var(--border-color);
+            color: var(--text-primary) !important;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+        }
+        .form-control::placeholder { color: var(--text-secondary); }
+        .form-label { font-weight: 600; color: var(--text-secondary); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), #0099cc);
+            border: none;
+            font-weight: 700;
+            padding: 12px 28px;
+            border-radius: 10px;
+            transition: all 0.3s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            transform: none;
+        }
+        .btn-outline-light {
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-outline-light:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-cyan);
+        }
+
+        /* Scan type cards */
+        .scan-type-card {
+            cursor: pointer;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            background: transparent;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .scan-type-card:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 212, 255, 0.05);
+        }
+        .scan-type-card.selected {
+            border-color: var(--accent-cyan);
+            background: rgba(0, 212, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.15);
+        }
+        .scan-type-card .icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+        .scan-type-card .name {
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        /* Results */
+        .result-item {
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            border-left: 4px solid transparent;
+            background: rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .result-item.severity-high { border-color: var(--accent-red); }
+        .result-item.severity-medium { border-color: var(--accent-yellow); }
+        .result-item.severity-low { border-color: #3b82f6; }
+        .result-item.severity-info { border-color: var(--text-secondary); }
+        .result-item.severity-safe { border-color: var(--accent-green); }
+        .result-item.severity-error { border-color: var(--accent-red); }
+
+        .badge-severity {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        /* Stats */
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+        }
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-label { color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px; }
+
+        /* Loading spinner */
+        .scan-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Progress bar */
+        .progress {
+            background: var(--bg-primary);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+            transition: width 0.5s ease;
+        }
+
+        /* Toast */
+        .toast-container {
+            z-index: 9999;
+        }
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+
+        /* Bulk scan textarea */
+        textarea.form-control {
+            min-height: 120px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 1.8rem; }
+            .scan-type-card { padding: 0.75rem; }
+            .scan-type-card .icon { font-size: 1.5rem; }
+            .stat-number { font-size: 1.6rem; }
+        }
+
+        /* Terminal effect for results */
+        .terminal-header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 14px;
+            border-radius: 8px 8px 0 0;
+            font-family: 'Consolas', monospace;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .terminal-header .dots span {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        /* Pulse animation for scanning */
+        .scanning-pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="grid-bg"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-shaded"></i>NetSec Toolkit
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link active" href="/"><i class="bi bi-house"></i> Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/scans"><i class="bi bi-clock-history"></i> Scan History</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container position-relative" style="z-index: 1;">
+        <!-- Hero -->
+        <div class="hero-section text-center">
+            <h1 class="hero-title">Network Security Toolkit</h1>
+            <p class="hero-subtitle">Advanced multi-vector security assessment platform — scan, detect, and report vulnerabilities</p>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6">
+                <div class="card stat-card">
+                    <div class="stat-number" id="statsHigh">0</div>
+                    <div class="stat-label"><span class="badge bg-danger">High Risk</span></div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card stat-card">
+                    <div class="stat-number" id="statsMedium">0</div>
+                    <div class="stat-label"><span class="badge bg-warning text-dark">Medium</span></div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card stat-card">
+                    <div class="stat-number" id="statsLow">0</div>
+                    <div class="stat-label"><span class="badge bg-info">Low</span></div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card stat-card">
+                    <div class="stat-number" id="statsSafe">0</div>
+                    <div class="stat-label"><span class="badge bg-success">Safe</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Scan Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-crosshair"></i> Scan Target
+                <div class="float-end">
+                    <button class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#bulkScanModal">
+                        <i class="bi bi-files"></i> Bulk Scan
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-lg-8">
+                        <label class="form-label"><i class="bi bi-globe"></i> Target URL / IP / Domain</label>
+                        <input type="text" class="form-control" id="targetUrl" placeholder="e.g., example.com or https://192.168.1.1">
+                    </div>
+                    <div class="col-lg-4 d-flex align-items-end">
+                        <button class="btn btn-primary w-100" id="startScanBtn" onclick="startScan()">
+                            <i class="bi bi-play-fill"></i> Start Scan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scan Types Selection -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-menu-button-wide"></i> Scan Modules
+                <span class="badge bg-secondary ms-2">Select modules to run</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-2" id="scanTypes">
+                    <div class="col-lg-3 col-md-4 col-6">
+                        <div class="scan-type-card selected" data-scan="all" onclick="toggleScanType(this)">
+                            <div class="icon">⚡</div>
+                            <div class="name">All Scans</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-6">
+                        <div class="scan-type-card" data-scan="sql_injection" onclick="toggleScanType(this)">
+                            <div class="icon">💉</div>
+                            <div class="name">SQL Injection</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-6">
+                        <div class="scan-type-card" data-scan="xss" onclick="toggleScanType(this)">
+                            <div class="icon">🔮</div>
+                            <div class="name">XSS Scanner</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-6">
+                        <div class="scan-type-card" data-scan="port_scan" onclick="toggleScanType(this)">
+                            <div class="icon">🔌</div>
+                            <div class="name">Port Scanner</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-6">
+                        <div class="scan-type-card" data-scan="directory_scan" onclick="toggleScanType(this)">
+                            <div class="icon">📁</div>
+                            <div class="name">Dir Scanner</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-6">
+                        <div class="scan-type-card" data-scan="subdomain_scan" onclick="toggleScanType(this)">
+                            <div class="icon">🌐</div>
+                            <div class="name">Subdomains</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-6">
+                        <div class="scan-type-card" data-scan="dns_enum" onclick="toggleScanType(this)">
+                            <div class="icon">📡</div>
+                            <div class="name">DNS Enum</div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-6">
+                        <div class="scan-type-card" data-scan="http_headers" onclick="toggleScanType(this)">
+                            <div class="icon">🛡️</div>
+                            <div class="name">HTTP Headers</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress & Results -->
+        <div class="card mb-4" id="resultsCard" style="display:none;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-terminal"></i> <span id="scanStatus">Scan Results</span></span>
+                <div>
+                    <button class="btn btn-sm btn-outline-light" onclick="exportResults('json')"><i class="bi bi-filetype-json"></i></button>
+                    <button class="btn btn-sm btn-outline-light" onclick="exportResults('csv')"><i class="bi bi-filetype-csv"></i></button>
+                    <button class="btn btn-sm btn-outline-light" onclick="exportResults('txt')"><i class="bi bi-filetype-txt"></i></button>
+                    <button class="btn btn-sm btn-close btn-close-white ms-2" onclick="hideResults()"></button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-3" id="progressBar" style="display:none;">
+                    <div class="progress-bar" role="progressbar" style="width: 0%;" id="progressFill"></div>
+                </div>
+                <div id="scanResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Scan Modal -->
+    <div class="modal fade" id="bulkScanModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom-color: var(--border-color);">
+                    <h5 class="modal-title"><i class="bi bi-files"></i> Bulk Scan</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label">Enter targets (one per line)</label>
+                    <textarea class="form-control" id="bulkTargets" placeholder="example.com&#10;test.com&#10;192.168.1.1"></textarea>
+                </div>
+                <div class="modal-footer" style="border-top-color: var(--border-color);">
+                    <button class="btn btn-primary w-100" onclick="bulkScan()" data-bs-dismiss="modal">
+                        <i class="bi bi-play-fill"></i> Scan All Targets
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert">
+            <div class="toast-body" id="toastMessage"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+        const socket = io();
+        let currentScanId = null;
+        let allResults = {};
+        let stats = { high: 0, medium: 0, low: 0, safe: 0 };
+
+        socket.on('connect', () => console.log('🔗 Connected to scan server'));
+
+        socket.on('scan_progress', (data) => {
+            if (data.scan_id !== currentScanId) return;
+            const resultsDiv = document.getElementById('scanResults');
+            
+            // Update stats
+            const typeResults = data.results || [];
+            typeResults.forEach(r => {
+                if (r.severity === 'high') stats.high++;
+                else if (r.severity === 'medium') stats.medium++;
+                else if (r.severity === 'low') stats.low++;
+                else if (r.severity === 'safe') stats.safe++;
+            });
+            updateStats();
+
+            // Store results
+            allResults[data.scan_type] = typeResults;
+
+            // Build display
+            let html = '';
+            for (const [scanType, findings] of Object.entries(allResults)) {
+                html += `<div class="terminal-header mb-2">
+                    <span class="dots"><span style="background:#ff5f56"></span><span style="background:#ffbd2e"></span><span style="background:#27c93f"></span></span>
+                    <span class="ms-2 text-uppercase fw-bold">${scanType.replace(/_/g, ' ')}</span>
+                    <span class="badge bg-${findings.some(f => f.severity === 'high') ? 'danger' : 'secondary'} ms-2">${findings.length} findings</span>
+                </div>`;
+                findings.forEach(f => {
+                    const icons = { high: '🔴', medium: '🟠', low: '🟡', info: 'ℹ️', safe: '✅', error: '❌' };
+                    html += `<div class="result-item severity-${f.severity}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>${f.title}</strong>
+                                <p class="mb-0 text-secondary small">${f.description}</p>
+                                ${f.detail ? `<code class="small text-info">${f.detail}</code>` : ''}
+                            </div>
+                            <span class="badge-severity badge bg-${f.severity === 'high' ? 'danger' : f.severity === 'medium' ? 'warning text-dark' : f.severity === 'low' ? 'info' : f.severity === 'safe' ? 'success' : 'secondary'}">
+                                ${f.severity}
+                            </span>
+                        </div>
+                    </div>`;
+                });
+            }
+            resultsDiv.innerHTML = html;
+        });
+
+        socket.on('scan_complete', (data) => {
+            if (data.scan_id !== currentScanId) return;
+            document.getElementById('scanStatus').innerHTML = '<span class="text-success">✅ Scan Complete</span>';
+            document.getElementById('startScanBtn').disabled = false;
+            document.getElementById('startScanBtn').innerHTML = '<i class="bi bi-play-fill"></i> Start Scan';
+            document.getElementById('progressBar').style.display = 'none';
+            showToast('Scan completed successfully!');
+        });
+
+        function toggleScanType(el) {
+            const isAll = el.dataset.scan === 'all';
+            if (isAll) {
+                document.querySelectorAll('.scan-type-card').forEach(c => c.classList.remove('selected'));
+                document.querySelector('[data-scan="all"]').classList.add('selected');
+            } else {
+                document.querySelector('[data-scan="all"]').classList.remove('selected');
+                el.classList.toggle('selected');
+                // If none selected, re-select "all"
+                if (!document.querySelectorAll('.scan-type-card.selected').length) {
+                    document.querySelector('[data-scan="all"]').classList.add('selected');
+                }
+            }
+        }
+
+        function getSelectedScanTypes() {
+            const selected = document.querySelectorAll('.scan-type-card.selected');
+            const scans = Array.from(selected).map(el => el.dataset.scan);
+            if (scans.includes('all')) return ['all'];
+            return scans.length ? scans : ['all'];
+        }
+
+        function startScan() {
+            const targetUrl = document.getElementById('targetUrl').value.trim();
+            if (!targetUrl) {
+                showToast('⚠️ Please enter a target URL');
+                document.getElementById('targetUrl').focus();
+                return;
+            }
+
+            const scanTypes = getSelectedScanTypes();
+            const btn = document.getElementById('startScanBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="scanning-pulse">⏳ Scanning...</span>';
+
+            // Reset UI
+            allResults = {};
+            stats = { high: 0, medium: 0, low: 0, safe: 0 };
+            updateStats();
+            document.getElementById('scanResults').innerHTML = '';
+            document.getElementById('resultsCard').style.display = 'block';
+            document.getElementById('scanStatus').innerHTML = '⏳ Scan in progress...';
+            document.getElementById('progressBar').style.display = 'block';
+            document.getElementById('progressFill').style.width = '0%';
+
+            fetch('/api/start_scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target_url: targetUrl, scan_types: scanTypes })
+            })
+            .then(r => r.json())
+            .then(data => {
+                currentScanId = data.scan_id;
+                // Simulate progress
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 5;
+                    document.getElementById('progressFill').style.width = Math.min(progress, 90) + '%';
+                    if (progress >= 90) clearInterval(interval);
+                }, 1000);
+            })
+            .catch(err => {
+                showToast('❌ Error: ' + err);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-play-fill"></i> Start Scan';
+            });
+        }
+
+        function bulkScan() {
+            const targets = document.getElementById('bulkTargets').value.trim().split('\n').filter(t => t.trim());
+            if (!targets.length) {
+                showToast('⚠️ Enter at least one target');
+                return;
+            }
+
+            fetch('/api/bulk_scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targets: targets.map(t => t.trim()) })
+            })
+            .then(r => r.json())
+            .then(data => {
+                showToast(`✅ Started scanning ${targets.length} targets`);
+                window.location.href = '/scans';
+            })
+            .catch(err => showToast('❌ Error: ' + err));
+        }
+
+        function exportResults(fmt) {
+            if (!currentScanId) {
+                showToast('⚠️ No scan results to export');
+                return;
+            }
+            window.open(`/api/export/${currentScanId}/${fmt}`, '_blank');
+        }
+
+        function hideResults() {
+            document.getElementById('resultsCard').style.display = 'none';
+        }
+
+        function updateStats() {
+            document.getElementById('statsHigh').textContent = stats.high;
+            document.getElementById('statsMedium').textContent = stats.medium;
+            document.getElementById('statsLow').textContent = stats.low;
+            document.getElementById('statsSafe').textContent = stats.safe;
+        }
+
+        function showToast(message) {
+            document.getElementById('toastMessage').textContent = message;
+            const toast = new bootstrap.Toast(document.getElementById('toast'));
+            toast.show();
+        }
+
+        // Enter key to start scan
+        document.getElementById('targetUrl').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') startScan();
+        });
+    </script>
+</body>
+</html>
