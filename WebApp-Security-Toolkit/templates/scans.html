@@ -7,91 +7,25 @@
     <title>Scan History - Network Security Toolkit</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <style>
-        :root {
-            --bg-primary: #0a0e17;
-            --bg-secondary: #111827;
-            --bg-card: #1a1f2e;
-            --accent-cyan: #00d4ff;
-            --accent-green: #00ff88;
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --border-color: #2d3748;
-        }
-        body {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-        .navbar {
-            background: rgba(17, 24, 39, 0.95) !important;
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
-        }
-        .navbar-brand {
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            transition: all 0.3s;
-        }
-        .card:hover {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.1);
-        }
-        .table {
-            color: var(--text-primary);
-            --bs-table-bg: transparent;
-            --bs-table-hover-bg: rgba(0, 212, 255, 0.05);
-        }
-        .table th {
-            color: var(--text-secondary);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid var(--border-color);
-        }
-        .table td {
-            border-color: var(--border-color);
-            vertical-align: middle;
-        }
-        .btn-outline-light {
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-        }
-        .btn-outline-light:hover {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 212, 255, 0.1);
-        }
-        .badge-running {
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-        }
-        .empty-state i {
-            font-size: 4rem;
-            color: var(--text-secondary);
-            opacity: 0.3;
-        }
+        .toast-container { position: fixed; bottom: 1rem; right: 1rem; z-index: 9999; }
+        .scan-row { transition: all 0.2s; cursor: pointer; }
+        .scan-row:hover { background: rgba(0, 212, 255, 0.05); }
+        .status-badge { font-size: 0.75rem; }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg">
+    <div class="grid-bg"></div>
+    <div class="toast-container"></div>
+
+    <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
             <a class="navbar-brand" href="/"><i class="bi bi-shield-shaded"></i> NetSec Toolkit</a>
-            <div class="collapse navbar-collapse">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/"><i class="bi bi-globe"></i> Remote Scan</a></li>
                     <li class="nav-item"><a class="nav-link" href="/local"><i class="bi bi-pc-display"></i> Local Audit</a></li>
@@ -101,17 +35,17 @@
         </div>
     </nav>
 
-    <div class="container py-4">
+    <div class="container position-relative" style="z-index: 1;">
         <h2 class="mb-4"><i class="bi bi-clock-history"></i> Scan History</h2>
 
         {% if scans %}
         <div class="card">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table class="table table-dark table-hover mb-0">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>#</th>
                                 <th>Target</th>
                                 <th>Type</th>
                                 <th>Status</th>
@@ -120,30 +54,29 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for scan in scans %}
-                            <tr>
-                                <td><code>#{{ scan.id }}</code></td>
-                                <td><strong>{{ scan.target_url }}</strong></td>
-                                <td><span class="badge bg-info text-dark">{{ scan.scan_type }}</span></td>
+                            {% for s in scans %}
+                            <tr class="scan-row" onclick="window.location='/scan/{{ s.id }}'">
+                                <td>{{ s.id }}</td>
+                                <td><code>{{ s.target_url }}</code></td>
+                                <td><span class="badge bg-info">{{ s.scan_type[:30] }}</span></td>
                                 <td>
-                                    {% if scan.status == 'completed' %}
-                                    <span class="badge bg-success">✅ Completed</span>
-                                    {% elif scan.status == 'running' %}
-                                    <span class="badge bg-warning text-dark badge-running">⏳ Running</span>
-                                    {% elif scan.status == 'error' %}
-                                    <span class="badge bg-danger">❌ Error</span>
+                                    {% if s.status == 'completed' %}
+                                        <span class="badge bg-success status-badge">✅ Complete</span>
+                                    {% elif s.status == 'running' %}
+                                        <span class="badge bg-warning text-dark status-badge">⏳ Running</span>
                                     {% else %}
-                                    <span class="badge bg-secondary">⏸️ {{ scan.status }}</span>
+                                        <span class="badge bg-secondary status-badge">{{ s.status }}</span>
                                     {% endif %}
                                 </td>
-                                <td class="text-secondary">{{ scan.started_at[:19] if scan.started_at else 'N/A' }}</td>
+                                <td class="text-secondary small">{{ s.started_at[:19] if s.started_at else '—' }}</td>
                                 <td>
-                                    <a href="/scan/{{ scan.id }}" class="btn btn-sm btn-outline-light">
-                                        <i class="bi bi-eye"></i> View
-                                    </a>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteScan({{ scan.id }})">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/scan/{{ s.id }}" class="btn btn-outline-info" title="View"><i class="bi bi-eye"></i></a>
+                                        <a href="/api/export/{{ s.id }}/json" class="btn btn-outline-success" title="JSON"><i class="bi bi-filetype-json"></i></a>
+                                        <a href="/api/export/{{ s.id }}/csv" class="btn btn-outline-warning" title="CSV"><i class="bi bi-filetype-csv"></i></a>
+                                        <a href="/api/export/{{ s.id }}/txt" class="btn btn-outline-light" title="TXT"><i class="bi bi-filetype-txt"></i></a>
+                                        <button class="btn btn-outline-danger" title="Delete" onclick="event.stopPropagation();deleteScan({{ s.id }})"><i class="bi bi-trash"></i></button>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -153,28 +86,31 @@
             </div>
         </div>
         {% else %}
-        <div class="card">
-            <div class="card-body empty-state">
-                <i class="bi bi-inbox"></i>
-                <h4 class="mt-3 text-secondary">No scans yet</h4>
-                <p class="text-secondary">Run your first scan from the dashboard</p>
-                <a href="/" class="btn btn-primary"><i class="bi bi-play-fill"></i> Start Scanning</a>
+        <div class="card text-center py-5">
+            <div class="card-body">
+                <h3 class="text-secondary"><i class="bi bi-inbox"></i></h3>
+                <p class="text-secondary">No scans yet</p>
+                <p class="text-muted small">Run your first scan from the dashboard</p>
+                <a href="/" class="btn btn-primary"><i class="bi bi-shield-check"></i> Start Scanning</a>
             </div>
         </div>
         {% endif %}
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
         function deleteScan(id) {
-            if (!confirm('Delete this scan record?')) return;
+            if (!confirm('Delete scan #' + id + '?')) return;
             fetch('/api/delete_scan/' + id, { method: 'DELETE' })
-            .then(r => r.json())
-            .then(() => location.reload())
-            .catch(e => alert('Error: ' + e));
+                .then(r => r.json())
+                .then(() => {
+                    showToast('✅ Scan deleted', 'success');
+                    location.reload();
+                })
+                .catch(err => showToast('❌ ' + err, 'danger'));
         }
-
-        // Auto-refresh running scans
-        setTimeout(() => location.reload(), 5000);
     </script>
 </body>
 </html>

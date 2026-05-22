@@ -4,91 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scan #{{ scan.id }} Details - Network Security Toolkit</title>
+    <title>Scan #{{ scan.id }} - Network Security Toolkit</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <style>
-        :root {
-            --bg-primary: #0a0e17;
-            --bg-secondary: #111827;
-            --bg-card: #1a1f2e;
-            --accent-cyan: #00d4ff;
-            --accent-green: #00ff88;
-            --accent-red: #ff3355;
-            --accent-yellow: #ffaa33;
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --border-color: #2d3748;
-        }
-        body {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        }
-        .navbar {
-            background: rgba(17, 24, 39, 0.95) !important;
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
-        }
-        .navbar-brand {
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            transition: all 0.3s;
-        }
-        .card-header {
-            background: rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
-        }
-        .result-item {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            border-left: 4px solid transparent;
-            background: rgba(0, 0, 0, 0.2);
-        }
-        .result-item.severity-high { border-color: var(--accent-red); background: rgba(255, 51, 85, 0.05); }
-        .result-item.severity-medium { border-color: var(--accent-yellow); background: rgba(255, 170, 51, 0.05); }
-        .result-item.severity-low { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
-        .result-item.severity-info { border-color: var(--text-secondary); }
-        .result-item.severity-safe { border-color: var(--accent-green); background: rgba(0, 255, 136, 0.05); }
-        .result-item.severity-error { border-color: var(--accent-red); }
-        .btn-outline-light {
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-        }
-        .btn-outline-light:hover {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 212, 255, 0.1);
-        }
-        code {
-            color: var(--accent-cyan);
-            background: rgba(0, 0, 0, 0.3);
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-        .section-title {
-            font-size: 1.2rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--accent-cyan);
-            margin-top: 24px;
-        }
+        .finding { padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid var(--border-color); background: rgba(0,0,0,0.15); }
+        .finding.severity-high { border-color: var(--accent-red); }
+        .finding.severity-medium { border-color: var(--accent-yellow); }
+        .finding.severity-low { border-color: #3b82f6; }
+        .finding.severity-info { border-color: var(--text-secondary); }
+        .finding.severity-safe { border-color: var(--accent-green); }
+        .finding.severity-error { border-color: var(--accent-red); }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg">
+    <div class="grid-bg"></div>
+
+    <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
             <a class="navbar-brand" href="/"><i class="bi bi-shield-shaded"></i> NetSec Toolkit</a>
-            <div class="collapse navbar-collapse">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link" href="/"><i class="bi bi-globe"></i> Remote Scan</a></li>
                     <li class="nav-item"><a class="nav-link" href="/local"><i class="bi bi-pc-display"></i> Local Audit</a></li>
@@ -98,65 +37,82 @@
         </div>
     </nav>
 
-    <div class="container py-4">
+    <div class="container position-relative" style="z-index: 1;">
         <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-file-text"></i> Scan #{{ scan.id }} Report</h2>
             <div>
-                <h2><i class="bi bi-file-earmark-text"></i> Scan Report #{{ scan.id }}</h2>
-                <p class="text-secondary mb-0">
-                    Target: <strong>{{ scan.target_url }}</strong> • 
-                    Type: <span class="badge bg-info text-dark">{{ scan.scan_type }}</span> •
-                    Status: {% if scan.status == 'completed' %}<span class="badge bg-success">Completed</span>{% else %}<span class="badge bg-warning text-dark">{{ scan.status }}</span>{% endif %}
-                </p>
-            </div>
-            <div>
-                <button class="btn btn-outline-light" onclick="window.open('/api/export/{{ scan.id }}/json')"><i class="bi bi-filetype-json"></i> JSON</button>
-                <button class="btn btn-outline-light" onclick="window.open('/api/export/{{ scan.id }}/csv')"><i class="bi bi-filetype-csv"></i> CSV</button>
-                <button class="btn btn-outline-light" onclick="window.open('/api/export/{{ scan.id }}/txt')"><i class="bi bi-filetype-txt"></i> TXT</button>
+                <a href="/api/export/{{ scan.id }}/json" class="btn btn-outline-success btn-sm"><i class="bi bi-filetype-json"></i> JSON</a>
+                <a href="/api/export/{{ scan.id }}/csv" class="btn btn-outline-warning btn-sm"><i class="bi bi-filetype-csv"></i> CSV</a>
+                <a href="/api/export/{{ scan.id }}/txt" class="btn btn-outline-light btn-sm"><i class="bi bi-filetype-txt"></i> TXT</a>
+                <a href="/scans" class="btn btn-outline-info btn-sm"><i class="bi bi-arrow-left"></i> Back</a>
             </div>
         </div>
 
-        {% if results %}
-            {% for scan_type, findings in results.items() %}
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between">
-                        <span><i class="bi bi-terminal"></i> {{ scan_type.replace('_', ' ').title() }}</span>
-                        <span class="badge bg-secondary">{{ findings|length }} findings</span>
-                    </div>
-                    <div class="card-body">
-                        {% if findings %}
-                            {% for finding in findings %}
-                            <div class="result-item severity-{{ finding.severity }}">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <strong>{{ finding.title }}</strong>
-                                        {% if finding.description %}
-                                        <p class="mb-1 text-secondary small">{{ finding.description }}</p>
-                                        {% endif %}
-                                        {% if finding.detail %}
-                                        <code class="small">{{ finding.detail }}</code>
-                                        {% endif %}
-                                    </div>
-                                    <span class="badge bg-{{ 'danger' if finding.severity == 'high' else 'warning text-dark' if finding.severity == 'medium' else 'info' if finding.severity == 'low' else 'success' if finding.severity == 'safe' else 'secondary' }}">
-                                        {{ finding.severity }}
-                                    </span>
-                                </div>
-                            </div>
-                            {% endfor %}
+        <!-- Info -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3"><strong>Target:</strong><br><code>{{ scan.target_url }}</code></div>
+                    <div class="col-md-3"><strong>Type:</strong><br><span class="badge bg-info">{{ scan.scan_type }}</span></div>
+                    <div class="col-md-3"><strong>Status:</strong><br>
+                        {% if scan.status == 'completed' %}
+                            <span class="badge bg-success">✅ Completed</span>
+                        {% elif scan.status == 'running' %}
+                            <span class="badge bg-warning text-dark">⏳ Running</span>
                         {% else %}
-                            <p class="text-secondary mb-0">No results for this scan module.</p>
+                            <span class="badge bg-secondary">{{ scan.status }}</span>
                         {% endif %}
                     </div>
+                    <div class="col-md-3"><strong>Started:</strong><br><span class="text-secondary small">{{ scan.started_at[:19] if scan.started_at else '—' }}</span></div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Findings -->
+        {% if results %}
+            {% for scan_type, findings in results.items() %}
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-terminal"></i> {{ scan_type.replace('_', ' ') | upper }}</span>
+                    <span class="badge bg-secondary">{{ findings|length }} findings</span>
+                </div>
+                <div class="card-body findings-list">
+                    {% if findings %}
+                        {% for f in findings %}
+                        <div class="finding severity-{{ f.severity }}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>{{ f.title }}</strong>
+                                    <p class="mb-0 text-secondary small">{{ f.description }}</p>
+                                    {% if f.detail %}<code class="small text-info">{{ f.detail }}</code>{% endif %}
+                                </div>
+                                <span class="badge bg-{{ 'danger' if f.severity == 'high' else 'warning text-dark' if f.severity == 'medium' else 'info' if f.severity == 'low' else 'success' if f.severity == 'safe' else 'secondary' }}">
+                                    {{ f.severity }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-secondary mb-0"><i class="bi bi-info-circle"></i> No findings for this scan type.</p>
+                    {% endif %}
+                </div>
+            </div>
             {% endfor %}
         {% else %}
-            <div class="card">
-                <div class="card-body text-center py-5">
-                    <i class="bi bi-hourglass-split" style="font-size: 3rem; opacity: 0.3;"></i>
-                    <p class="text-secondary mt-3">No results available. Scan may still be in progress.</p>
-                    <a href="/scans" class="btn btn-outline-light"><i class="bi bi-arrow-left"></i> Back to History</a>
+            <div class="card text-center py-5">
+                <div class="card-body">
+                    <h3 class="text-secondary"><i class="bi bi-inbox"></i></h3>
+                    <p class="text-secondary">No results available</p>
+                    {% if scan.status == 'running' %}
+                        <p class="text-muted">Scan is still in progress. <a href="/scans">Refresh history</a></p>
+                    {% endif %}
                 </div>
             </div>
         {% endif %}
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 </body>
 </html>
+</code_snippet_output>

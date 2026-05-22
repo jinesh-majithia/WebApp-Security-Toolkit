@@ -7,178 +7,18 @@
     <title>Local Security Audit - Network Security Toolkit</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <style>
-        :root {
-            --bg-primary: #0a0e17;
-            --bg-secondary: #111827;
-            --bg-card: #1a1f2e;
-            --accent-cyan: #00d4ff;
-            --accent-green: #00ff88;
-            --accent-red: #ff3355;
-            --accent-yellow: #ffaa33;
-            --text-primary: #e2e8f0;
-            --text-secondary: #94a3b8;
-            --border-color: #2d3748;
-        }
-        * { box-sizing: border-box; }
-        body {
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            min-height: 100vh;
-        }
-        .grid-bg {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: 
-                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .navbar {
-            background: rgba(17, 24, 39, 0.95) !important;
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
-            z-index: 100;
-        }
-        .navbar-brand {
-            font-weight: 800;
-            font-size: 1.4rem;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .nav-link { color: var(--text-secondary) !important; font-weight: 500; }
-        .nav-link:hover, .nav-link.active { color: var(--accent-cyan) !important; }
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-        .card:hover {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 8px 30px rgba(0, 212, 255, 0.1);
-        }
-        .card-header {
-            background: rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
-        }
-        .hero-title {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent-cyan), #0099cc);
-            border: none;
-            font-weight: 700;
-            padding: 12px 28px;
-            border-radius: 10px;
-            transition: all 0.3s;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
-        }
-        .btn-outline-light {
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            font-weight: 600;
-        }
-        .btn-outline-light:hover {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 212, 255, 0.1);
-        }
-        .result-item {
-            padding: 10px 14px;
-            border-radius: 8px;
-            margin-bottom: 6px;
-            border-left: 4px solid transparent;
-            background: rgba(0, 0, 0, 0.2);
-            animation: slideIn 0.3s ease;
-        }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .result-item.severity-high { border-color: var(--accent-red); background: rgba(255, 51, 85, 0.05); }
-        .result-item.severity-medium { border-color: var(--accent-yellow); background: rgba(255, 170, 51, 0.05); }
-        .result-item.severity-low { border-color: #3b82f6; }
-        .result-item.severity-info { border-color: var(--text-secondary); }
-        .result-item.severity-safe { border-color: var(--accent-green); background: rgba(0, 255, 136, 0.05); }
-        .result-item.severity-error { border-color: var(--accent-red); }
-        .stat-card { text-align: center; padding: 20px; }
-        .stat-number {
-            font-size: 2.2rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .scan-spinner {
-            width: 40px; height: 40px;
-            border: 4px solid var(--border-color);
-            border-top: 4px solid var(--accent-cyan);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .progress {
-            background: var(--bg-primary);
-            border-radius: 10px;
-            height: 8px;
-        }
-        .progress-bar {
-            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
-            transition: width 0.5s ease;
-        }
-        .scan-type-card {
-            cursor: pointer;
-            padding: 1rem;
-            border-radius: 12px;
-            border: 2px solid var(--border-color);
-            background: transparent;
-            transition: all 0.3s;
-            text-align: center;
-        }
-        .scan-type-card:hover {
-            border-color: var(--accent-cyan);
-            background: rgba(0, 212, 255, 0.05);
-        }
-        .scan-type-card.selected {
-            border-color: var(--accent-green);
-            background: rgba(0, 255, 136, 0.1);
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.15);
-        }
-        .scan-type-card .icon { font-size: 2rem; margin-bottom: 8px; }
-        .scan-type-card .name { font-weight: 600; font-size: 0.85rem; }
-        .terminal-header {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 8px 14px;
-            border-radius: 8px 8px 0 0;
-            font-family: 'Consolas', monospace;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            border-bottom: 1px solid var(--border-color);
-        }
-        .scanning-pulse { animation: pulse 1.5s ease-in-out infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .toast-container { position: fixed; bottom: 1rem; right: 1rem; z-index: 9999; }
     </style>
 </head>
 <body>
     <div class="grid-bg"></div>
+    <div class="toast-container"></div>
 
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="/"><i class="bi bi-shield-shaded"></i>NetSec Toolkit</a>
+            <a class="navbar-brand" href="/"><i class="bi bi-shield-shaded"></i> NetSec Toolkit</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -195,85 +35,55 @@
     <div class="container position-relative" style="z-index: 1;">
         <div class="hero-section text-center py-4">
             <h1 class="hero-title"><i class="bi bi-laptop"></i> Local Security Audit</h1>
-            <p class="text-secondary">Run security checks on <strong>this machine</strong> — no target URL required. Checks firewall, open ports, OS security, Wi-Fi, and more.</p>
+            <p class="text-secondary">Run security checks on <strong>this machine</strong> — firewall, ports, OS, Wi-Fi, Windows security, and shares.</p>
         </div>
 
         <!-- Stats -->
         <div class="row g-3 mb-4">
-            <div class="col-md-3 col-6">
-                <div class="card stat-card">
-                    <div class="stat-number" id="statsHigh">0</div>
-                    <div class="stat-label"><span class="badge bg-danger">Issues</span></div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="card stat-card">
-                    <div class="stat-number" id="statsSafe">0</div>
-                    <div class="stat-label"><span class="badge bg-success">Passed</span></div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="card stat-card">
-                    <div class="stat-number" id="statsInfo">0</div>
-                    <div class="stat-label"><span class="badge bg-info">Info</span></div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="card stat-card">
-                    <div class="stat-number" id="statsTotal">0</div>
-                    <div class="stat-label"><span class="badge bg-secondary">Total Checks</span></div>
-                </div>
-            </div>
+            <div class="col-md-3 col-6"><div class="card stat-card"><div class="stat-number" id="statsHigh">0</div><div class="stat-label"><span class="badge bg-danger">Issues</span></div></div></div>
+            <div class="col-md-3 col-6"><div class="card stat-card"><div class="stat-number" id="statsSafe">0</div><div class="stat-label"><span class="badge bg-success">Passed</span></div></div></div>
+            <div class="col-md-3 col-6"><div class="card stat-card"><div class="stat-number" id="statsInfo">0</div><div class="stat-label"><span class="badge bg-info">Info</span></div></div></div>
+            <div class="col-md-3 col-6"><div class="card stat-card"><div class="stat-number" id="statsTotal">0</div><div class="stat-label"><span class="badge bg-secondary">Total Checks</span></div></div></div>
         </div>
 
-        <!-- Local Scan Modules -->
+        <!-- Modules -->
         <div class="card mb-4">
-            <div class="card-header">
-                <i class="bi bi-menu-button-wide"></i> Local Audit Modules
-                <span class="badge bg-secondary ms-2">Select checks to run</span>
-            </div>
+            <div class="card-header"><i class="bi bi-menu-button-wide"></i> Local Audit Modules <span class="badge bg-secondary ms-2">Select checks to run</span></div>
             <div class="card-body">
                 <div class="row g-2" id="scanTypes">
                     <div class="col-lg-3 col-md-4 col-6">
                         <div class="scan-type-card selected" data-scan="all" onclick="toggleScanType(this)">
-                            <div class="icon">✅</div>
-                            <div class="name">All Checks</div>
+                            <div class="icon">✅</div><div class="name">All Checks</div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-4 col-6">
                         <div class="scan-type-card" data-scan="system_info" onclick="toggleScanType(this)">
-                            <div class="icon">🖥️</div>
-                            <div class="name">System Info</div>
+                            <div class="icon">🖥️</div><div class="name">System Info</div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-4 col-6">
                         <div class="scan-type-card" data-scan="firewall" onclick="toggleScanType(this)">
-                            <div class="icon">🧱</div>
-                            <div class="name">Firewall Status</div>
+                            <div class="icon">🧱</div><div class="name">Firewall Status</div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-4 col-6">
                         <div class="scan-type-card" data-scan="local_ports" onclick="toggleScanType(this)">
-                            <div class="icon">🔌</div>
-                            <div class="name">Local Ports</div>
+                            <div class="icon">🔌</div><div class="name">Local Ports</div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-4 col-6">
                         <div class="scan-type-card" data-scan="wifi_security" onclick="toggleScanType(this)">
-                            <div class="icon">📶</div>
-                            <div class="name">Wi-Fi Security</div>
+                            <div class="icon">📶</div><div class="name">Wi-Fi Security</div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-4 col-6">
                         <div class="scan-type-card" data-scan="windows_security" onclick="toggleScanType(this)">
-                            <div class="icon">🛡️</div>
-                            <div class="name">Windows Security</div>
+                            <div class="icon">🛡️</div><div class="name">Windows Security</div>
                         </div>
                     </div>
                     <div class="col-lg-3 col-md-4 col-6">
                         <div class="scan-type-card" data-scan="network_share" onclick="toggleScanType(this)">
-                            <div class="icon">📂</div>
-                            <div class="name">Network Shares</div>
+                            <div class="icon">📂</div><div class="name">Network Shares</div>
                         </div>
                     </div>
                 </div>
@@ -281,7 +91,7 @@
                     <button class="btn btn-primary btn-lg" id="startLocalScanBtn" onclick="startLocalScan()">
                         <i class="bi bi-shield-check"></i> Run Local Security Audit
                     </button>
-                    <p class="text-secondary small mt-2"><i class="bi bi-info-circle"></i> All checks run locally on this machine. No data is sent externally.</p>
+                    <p class="text-secondary small mt-2"><i class="bi bi-info-circle"></i> All checks run locally. No data is sent externally.</p>
                 </div>
             </div>
         </div>
@@ -290,11 +100,11 @@
         <div class="card mb-4" id="resultsCard" style="display:none;">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-terminal"></i> <span id="scanStatus">Audit Results</span></span>
-                <button class="btn btn-sm btn-close btn-close-white" onclick="hideResults()"></button>
+                <button class="btn btn-sm btn-close btn-close-white" onclick="document.getElementById('resultsCard').style.display='none'"></button>
             </div>
             <div class="card-body">
                 <div class="progress mb-3" id="progressBar" style="display:none;">
-                    <div class="progress-bar" role="progressbar" style="width: 0%;" id="progressFill"></div>
+                    <div class="progress-bar" role="progressbar" style="width:0%;" id="progressFill"></div>
                 </div>
                 <div id="scanResults"></div>
             </div>
@@ -303,52 +113,23 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        const socket = io();
         let currentScanId = null;
         let allResults = {};
-        let stats = { high: 0, safe: 0, info: 0, total: 0 };
-
-        socket.on('connect', () => console.log('🔗 Connected'));
+        const stats = { high: 0, safe: 0, info: 0, total: 0 };
 
         socket.on('local_scan_progress', (data) => {
             if (data.scan_id !== currentScanId) return;
-            const resultsDiv = document.getElementById('scanResults');
-            
-            const typeResults = data.results || [];
-            typeResults.forEach(r => {
+            allResults[data.scan_type] = data.results || [];
+            for (const r of (data.results || [])) {
                 stats.total++;
-                if (r.severity === 'high' || r.severity === 'medium' || r.severity === 'low') stats.high++;
+                if (['high','medium','low'].includes(r.severity)) stats.high++;
                 else if (r.severity === 'safe') stats.safe++;
                 else if (r.severity === 'info') stats.info++;
-            });
-            updateStats();
-
-            allResults[data.scan_type] = typeResults;
-
-            let html = '';
-            for (const [scanType, findings] of Object.entries(allResults)) {
-                html += `<div class="terminal-header mb-2">
-                    <span class="text-uppercase fw-bold">🔍 ${scanType.replace(/_/g, ' ')}</span>
-                    <span class="badge bg-${findings.some(f => f.severity === 'high' || f.severity === 'medium') ? 'danger' : 'secondary'} ms-2">${findings.length} checks</span>
-                </div>`;
-                findings.forEach(f => {
-                    const icons = { high: '🔴', medium: '🟠', low: '🟡', info: 'ℹ️', safe: '✅', error: '❌' };
-                    html += `<div class="result-item severity-${f.severity}">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <strong>${f.title}</strong>
-                                <p class="mb-0 text-secondary small">${f.description}</p>
-                                ${f.detail ? `<code class="small text-info">${f.detail}</code>` : ''}
-                            </div>
-                            <span class="badge bg-${f.severity === 'high' ? 'danger' : f.severity === 'medium' ? 'warning text-dark' : f.severity === 'low' ? 'info' : f.severity === 'safe' ? 'success' : 'secondary'}">
-                                ${f.severity}
-                            </span>
-                        </div>
-                    </div>`;
-                });
             }
-            resultsDiv.innerHTML = html;
+            updateStats(stats);
+            renderResults('scanResults', allResults);
         });
 
         socket.on('local_scan_complete', (data) => {
@@ -357,29 +138,8 @@
             document.getElementById('startLocalScanBtn').disabled = false;
             document.getElementById('startLocalScanBtn').innerHTML = '<i class="bi bi-shield-check"></i> Run Local Security Audit';
             document.getElementById('progressBar').style.display = 'none';
-            showToast('✅ Local security audit completed!');
+            showToast('✅ Local security audit completed!', 'success');
         });
-
-        function toggleScanType(el) {
-            const isAll = el.dataset.scan === 'all';
-            if (isAll) {
-                document.querySelectorAll('.scan-type-card').forEach(c => c.classList.remove('selected'));
-                document.querySelector('[data-scan="all"]').classList.add('selected');
-            } else {
-                document.querySelector('[data-scan="all"]').classList.remove('selected');
-                el.classList.toggle('selected');
-                if (!document.querySelectorAll('.scan-type-card.selected').length) {
-                    document.querySelector('[data-scan="all"]').classList.add('selected');
-                }
-            }
-        }
-
-        function getSelectedScanTypes() {
-            const selected = document.querySelectorAll('.scan-type-card.selected');
-            const scans = Array.from(selected).map(el => el.dataset.scan);
-            if (scans.includes('all')) return ['all'];
-            return scans.length ? scans : ['all'];
-        }
 
         function startLocalScan() {
             const scanTypes = getSelectedScanTypes();
@@ -388,13 +148,14 @@
             btn.innerHTML = '<span class="scanning-pulse">⏳ Running local audit...</span>';
 
             allResults = {};
-            stats = { high: 0, safe: 0, info: 0, total: 0 };
-            updateStats();
+            Object.assign(stats, { high: 0, safe: 0, info: 0, total: 0 });
+            updateStats(stats);
             document.getElementById('scanResults').innerHTML = '';
             document.getElementById('resultsCard').style.display = 'block';
             document.getElementById('scanStatus').innerHTML = '⏳ Running local security checks...';
             document.getElementById('progressBar').style.display = 'block';
             document.getElementById('progressFill').style.width = '0%';
+            startProgressBar();
 
             fetch('/api/start_local_scan', {
                 method: 'POST',
@@ -402,44 +163,12 @@
                 body: JSON.stringify({ scan_types: scanTypes })
             })
             .then(r => r.json())
-            .then(data => {
-                currentScanId = data.scan_id;
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += 5;
-                    document.getElementById('progressFill').style.width = Math.min(progress, 90) + '%';
-                    if (progress >= 90) clearInterval(interval);
-                }, 800);
-            })
+            .then(data => { currentScanId = data.scan_id; })
             .catch(err => {
-                showToast('❌ Error: ' + err);
+                showToast('❌ Error: ' + err, 'danger');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-shield-check"></i> Run Local Security Audit';
             });
-        }
-
-        function hideResults() {
-            document.getElementById('resultsCard').style.display = 'none';
-        }
-
-        function updateStats() {
-            document.getElementById('statsHigh').textContent = stats.high;
-            document.getElementById('statsSafe').textContent = stats.safe;
-            document.getElementById('statsInfo').textContent = stats.info;
-            document.getElementById('statsTotal').textContent = stats.total;
-        }
-
-        function showToast(message) {
-            const toastEl = document.getElementById('toast') || (() => {
-                const t = document.createElement('div');
-                t.id = 'toast';
-                t.className = 'toast';
-                t.innerHTML = '<div class="toast-body" id="toastMessage"></div>';
-                document.querySelector('.toast-container')?.appendChild(t);
-                return t;
-            })();
-            document.getElementById('toastMessage').textContent = message;
-            new bootstrap.Toast(toastEl).show();
         }
     </script>
 </body>
