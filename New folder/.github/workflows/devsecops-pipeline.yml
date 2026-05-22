@@ -1,0 +1,94 @@
+
+name: DevSecOps Secure Deployment Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # Phase 1: Secret Detection
+  secret-scanning:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog OSS Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+
+  # Phase 2: Dependency Scanning (SCA)
+  dependency-scanning:
+    runs-on: ubuntu-latest
+    needs: secret-scanning
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner (SCA)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+
+  # Phase 3: Static Analysis (SAST)
+  static-analysis:
+    runs-on: ubuntu-latest
+    needs: secret-scanning
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Semgrep OSS Scan
+        run: |
+          python3 -m pip install semgrep
+          semgrep scan --config=auto --error
+
+  # Phase 4: Container Security Scanning
+  container-security:
+    runs-on: ubuntu-latest
+    needs: [dependency-scanning, static-analysis]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build local Frontend Docker Image
+        run: docker build -t local-frontend:test ./frontend
+
+      - name: Build local Backend Docker Image
+        run: docker build -t local-backend:test ./backend
+
+      - name: Scan Frontend Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'local-frontend:test'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL'
+
+      - name: Scan Backend Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'local-backend:test'
+          format: 'table'
+          exit-code: '1'
+          severity: 'CRITICAL'
+
+  # Phase 5: Auto-Deployment
+  deploy:
+    runs-on: ubuntu-latest
+    needs: container-security
+    steps:
+      - name: Trigger Deploy via Render Webhook
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_WEBHOOK_URL }}"
