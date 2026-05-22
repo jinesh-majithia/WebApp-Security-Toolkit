@@ -14,6 +14,7 @@
 - **No CSS/JS duplication**: All shared styles in `main.css`, shared logic in `main.js`
 - **Thread safety**: `db.session.begin()` context manager, `daemon=True` threads
 - **Stateless templates**: Templates use only `{{ url_for }}` for static assets; no embedded styles/blocks
+- **App context for background threads**: Both `run_remote_scan()` and `run_local_scan()` accept `app` as first arg and wrap thread logic in `with app.app_context():`
 
 ## Routes
 | Route | Method | Purpose |
@@ -33,3 +34,9 @@
 ## Known Issues
 - **Stale server processes**: Kill all PIDs on :5000 with `taskkill /F /PID <pid>` before restarting
 - **psutil**: Not installed by default; process scanner degrades gracefully with `ImportError`
+- **Pending scans from before fix**: Scans started before app_context fix (IDs 9-12) show "pending" forever; they can be deleted via UI
+
+## Fixed Issues
+- **RuntimeError: Working outside of application context**: Fixed in `utils/orchestrator.py` by wrapping background thread logic inside `with app.app_context():`. Also updated `app.py` to pass `app` as first arg to both `run_remote_scan()` and `run_local_scan()`.
+
+scans.db should be ignored when pushing commit
