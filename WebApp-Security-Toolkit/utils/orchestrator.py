@@ -39,113 +39,62 @@ LOCAL_SCANNERS = {
 }
 
 
-def _run_scanners(scanner_map, scan_types, scan_id, socketio, progress_event, delay=0.3):
-    """Generic scanner runner. Emits progress per scan type."""
-    all_results = {}
-
-    with db.session.begin():
-        record = db.session.get(ScanHistory, scan_id)
-        if record:
-            record.status = 'running'
-
-    for name, Klass in scanner_map.items():
-        if scan_types != ['all'] and name not in scan_types:
-            continue
-        try:
-            scanner = Klass(Klass('').target_url if hasattr(Klass, '__init__') and 'target_url' in Klass.__init__.__code__.co_varnames else 'localhost')
-            # Local scanners don't take target_url; remote scanners do
-            if issubclass(Klass, SQLInjectionScanner.__class__) or True:  # simplified check
-                scanner = Klass('localhost' if name in LOCAL_SCANNERS else 'localhost')
-            results = scanner.safe_scan()
-        except Exception:
-            results = [{'severity': 'error', 'title': 'Scanner Error', 'description': 'Failed to instantiate scanner.'}]
-
-        all_results[name] = results
-        if socketio:
-            socketio.emit(progress_event, {
-                'scan_id': scan_id,
-                'scan_type': name,
-                'results': results,
-                'status': 'completed',
-            })
-        time.sleep(delay)
-
-    with db.session.begin():
-        record = db.session.get(ScanHistory, scan_id)
-        if record:
-            record.status = 'completed'
-            record.completed_at = datetime.utcnow()
-            record.results = json.dumps(all_results, indent=2, default=str)
-
-    if socketio:
-        socketio.emit(progress_event.replace('progress', 'complete'), {
-            'scan_id': scan_id,
-            'status': 'completed',
-        })
-
-
-def run_remote_scan(target_url, scan_types, scan_id, socketio):
+def run_remote_scan(app, target_url, scan_types, scan_id, socketio):
     """Run remote-target scanners in a background thread."""
     def _run():
-        all_results = {}
-        for name, Klass in REMOTE_SCANNERS.items():
-            if scan_types != ['all'] and name not in scan_types:
-                continue
-            scanner = Klass(target_url, scan_id)
-            results = scanner.safe_scan()
-            all_results[name] = results
-            socketio.emit('scan_progress', {
-                'scan_id': scan_id, 'scan_type': name,
-                'results': results, 'status': 'completed',
-            })
-            time.sleep(0.5)
+        with app.app_context():
+            all_results = {}
+            for name, Klass in REMOTE_SCANNERS.items():
+                if scan_types != ['all'] and name not in scan_types:
+                    continue
+                scanner = Klass(target_url, scan_id)
+                results = scanner.safe_scan()
+                all_results[name] = results
+                socketio.emit('scan_progress', {
+                    'scan_id': scan_id, 'scan_type': name,
+                    'results': results, 'status': 'completed',
+                })
+                time.sleep(0.5)
 
-        # Remove session from any parent context, then create our own
-        from utils.database import db as _db
-        _db.session.remove()
-        record = _db.session.get(ScanHistory, scan_id)
-        if record:
-            record.status = 'completed'
-            record.completed_at = datetime.utcnow()
-            record.results = json.dumps(all_results, indent=2, default=str)
-            _db.session.add(record)
-            _db.session.commit()
-        socketio.emit('scan_complete', {'scan_id': scan_id, 'status': 'completed'})
+            record = db.session.get(ScanHistory, scan_id)
+            if record:
+                record.status = 'completed'
+                record.completed_at = datetime.utcnow()
+                record.results = json.dumps(all_results, indent=2, default=str)
+                db.session.add(record)
+                db.session.commit()
+            socketio.emit('scan_complete', {'scan_id': scan_id, 'status': 'completed'})
 
     thread = threading.Thread(target=_run, daemon=True)
     thread.start()
     return thread
 
 
-def run_local_scan(scan_types, scan_id, socketio):
+def run_local_scan(app, scan_types, scan_id, socketio):
     """Run local-machine scanners in a background thread."""
-    # No db.session.begin() here — the caller already has a transaction.
-    # The _run thread uses its own session via db.session.remove() / add / commit.
     def _run():
-        all_results = {}
-        for name, Klass in LOCAL_SCANNERS.items():
-            if scan_types != ['all'] and name not in scan_types:
-                continue
-            scanner = Klass()
-            results = scanner.safe_scan()
-            all_results[name] = results
-            socketio.emit('local_scan_progress', {
-                'scan_id': scan_id, 'scan_type': name,
-                'results': results, 'status': 'completed',
-            })
-            time.sleep(0.3)
+        with app.app_context():
+            all_results = {}
+            for name, Klass in LOCAL_SCANNERS.items():
+                if scan_types != ['all'] and name not in scan_types:
+                    continue
+                scanner = Klass()
+                results = scanner.safe_scan()
+                all_results[name] = results
+                socketio.emit('local_scan_progress', {
+                    'scan_id': scan_id, 'scan_type': name,
+                    'results': results, 'status': 'completed',
+                })
+                time.sleep(0.3)
 
-        # Remove session from any parent context, then create our own
-        from utils.database import db as _db
-        _db.session.remove()
-        record = _db.session.get(ScanHistory, scan_id)
-        if record:
-            record.status = 'completed'
-            record.completed_at = datetime.utcnow()
-            record.results = json.dumps(all_results, indent=2, default=str)
-            _db.session.add(record)
-            _db.session.commit()
-        socketio.emit('local_scan_complete', {'scan_id': scan_id, 'status': 'completed'})
+            record = db.session.get(ScanHistory, scan_id)
+            if record:
+                record.status = 'completed'
+                record.completed_at = datetime.utcnow()
+                record.results = json.dumps(all_results, indent=2, default=str)
+                db.session.add(record)
+                db.session.commit()
+            socketio.emit('local_scan_complete', {'scan_id': scan_id, 'status': 'completed'})
 
     thread = threading.Thread(target=_run, daemon=True)
     thread.start()

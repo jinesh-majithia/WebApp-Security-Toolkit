@@ -67,7 +67,7 @@ def start_scan():
     db.session.add(record)
     db.session.commit()
 
-    run_remote_scan(target, scan_types, record.id, socketio)
+    run_remote_scan(app, target, scan_types, record.id, socketio)
     return jsonify({'scan_id': record.id, 'status': 'started'})
 
 
@@ -80,7 +80,7 @@ def start_local_scan():
     db.session.add(record)
     db.session.commit()
 
-    run_local_scan(scan_types, record.id, socketio)
+    run_local_scan(app, scan_types, record.id, socketio)
     return jsonify({'scan_id': record.id, 'status': 'started'})
 
 
@@ -98,7 +98,7 @@ def bulk_scan():
         record = ScanHistory(target_url=t, scan_type='all', status='pending')
         db.session.add(record)
         db.session.commit()
-        run_remote_scan(t, ['all'], record.id, socketio)
+        run_remote_scan(app, t, ['all'], record.id, socketio)
         scan_ids.append(record.id)
 
     return jsonify({'scan_ids': scan_ids, 'status': 'started'})
