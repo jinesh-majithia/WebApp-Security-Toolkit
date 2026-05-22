@@ -98,4 +98,3 @@ function startProgressBar(intervalMs = 800) {
     }, intervalMs);
     return id;
 }
-</code_snippet_output>
